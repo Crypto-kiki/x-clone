@@ -30,7 +30,7 @@ router.post("/", async (req, res) => {
     if (existUser) {
       return res.status(400).json({
         ok: false,
-        message: "user already existed.",
+        message: "User already existed.",
       });
     }
 
@@ -65,6 +65,48 @@ router.post("/", async (req, res) => {
       ok: false,
       message: "Server error.",
     });
+  }
+});
+
+// 유저 검증 라우트
+router.post("/test", async (req, res) => {
+  try {
+    const { account, password } = req.body;
+
+    if (!account || !password) {
+      return res.status(400).json({
+        ok: false,
+        message: "Not exist data",
+      });
+    }
+
+    const user = await client.user.findUnique({
+      where: {
+        account,
+      },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        ok: false,
+        message: "Not exist user",
+      });
+    }
+
+    const result = bcrypt.compareSync(password, user.password);
+
+    if (!result) {
+      return res.status(400).json({
+        ok: false,
+        message: "Not correct password",
+      });
+    }
+
+    return res.json({
+      ok: true,
+    });
+  } catch (error) {
+    return;
   }
 });
 
