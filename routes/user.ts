@@ -2,6 +2,7 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import { PrismaClient } from "@prisma/client";
+import jwt from "jsonwebtoken";
 
 const router = express.Router();
 
@@ -37,28 +38,20 @@ router.post("/", async (req, res) => {
     // user 생성하기
     const hashedPassword = bcrypt.hashSync(password, 10);
 
-    const newUser = await client.user.create({
+    await client.user.create({
       data: {
         account,
         password: hashedPassword,
       },
     });
 
+    const token = jwt.sign({ account }, process.env.JWT_SECRET_KEY!);
+
     return res.json({
       ok: true,
-      user: {
-        id: newUser.id,
-        createdAt: newUser.createdAt,
-        updatedAt: newUser.updatedAt,
-        account: newUser.account,
-      },
+      token,
     });
   } catch (error) {
-    /*
-    backend에서 console.error(error)로 관리하지 않음.
-    에러 로그를 기록해주는 방법을 사용함.
-    keyword : node js morgan
-    */
     console.error(error);
 
     return res.status(500).json({
@@ -102,8 +95,11 @@ router.post("/test", async (req, res) => {
       });
     }
 
+    const token = jwt.sign({ account }, process.env.JWT_SECRET_KEY!);
+
     return res.json({
       ok: true,
+      token,
     });
   } catch (error) {
     return;
